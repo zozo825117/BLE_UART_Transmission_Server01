@@ -1,15 +1,16 @@
-/*******************************************************************************
-File Name: CYBLE_custom.c
-Version 2.10
-
-Description:
- Contains the source code for the Custom Service.
-
+/***************************************************************************//**
+* \file CYBLE_custom.c
+* \version 3.10
+* 
+* \brief
+*  Contains the source code for the Custom Service.
+* 
 ********************************************************************************
-Copyright 2014-2015, Cypress Semiconductor Corporation.  All rights reserved.
-You may use this file only in accordance with the license, terms, conditions,
-disclaimers, and limitations in the end user license agreement accompanying
-the software package with which this file was provided.
+* \copyright
+* Copyright 2014-2016, Cypress Semiconductor Corporation.  All rights reserved.
+* You may use this file only in accordance with the license, terms, conditions,
+* disclaimers, and limitations in the end user license agreement accompanying
+* the software package with which this file was provided.
 *******************************************************************************/
 
 
@@ -36,6 +37,7 @@ const CYBLE_CUSTOMS_T cyBle_customs[0x01u] = {
                 /* Array of Descriptors handles */
                 {
                     0x000Fu, /* Handle of the Custom Descriptor descriptor */ 
+                    0x0010u, /* Handle of the Client Characteristic Configuration descriptor */ 
                 }, 
             },
         }, 
@@ -55,18 +57,14 @@ static uint16 cyBle_customDisCharIndex;
 
 
 /****************************************************************************** 
-##Function Name: CyBle_CustomInit
-*******************************************************************************
-
-Summary:
- This function initializes Custom Service.
-
-Parameters:
- None
-
-Return:
- None
-
+* Function Name: CyBle_CustomInit
+***************************************************************************//**
+* 
+*  This function initializes Custom Service.
+* 
+* \return
+*  None
+* 
 ******************************************************************************/
 void CyBle_CustomInit(void)
 {
@@ -79,17 +77,20 @@ void CyBle_CustomInit(void)
     
     for(locServIndex = 0u; locServIndex < CYBLE_CUSTOMC_SERVICE_COUNT; locServIndex++)
     {
-        for(locCharIndex = 0u; locCharIndex < cyBle_customCServ[locServIndex].charCount; locCharIndex++)
+        if(cyBle_serverInfo[CYBLE_SRVI_CUSTOMS + locServIndex].range.startHandle == CYBLE_GATT_INVALID_ATTR_HANDLE_VALUE)
         {
-            cyBle_customCServ[locServIndex].customServChar[locCharIndex].
-                customServCharHandle = 0u;
-            
-            for(locDescIndex = 0u; locDescIndex < 
-                cyBle_customCServ[locServIndex].customServChar[locCharIndex].descCount; 
-                    locDescIndex++)
+            for(locCharIndex = 0u; locCharIndex < cyBle_customCServ[locServIndex].charCount; locCharIndex++)
             {
                 cyBle_customCServ[locServIndex].customServChar[locCharIndex].
-                    customServCharDesc[locDescIndex].descHandle = 0u;
+                    customServCharHandle = 0u;
+                
+                for(locDescIndex = 0u; locDescIndex < 
+                    cyBle_customCServ[locServIndex].customServChar[locCharIndex].descCount; 
+                        locDescIndex++)
+                {
+                    cyBle_customCServ[locServIndex].customServChar[locCharIndex].
+                        customServCharDesc[locDescIndex].descHandle = 0u;
+                }
             }
         }
     }
@@ -102,19 +103,17 @@ void CyBle_CustomInit(void)
 
     
 /******************************************************************************
-##Function Name: CyBle_CustomcDiscoverServiceEventHandler
-*******************************************************************************
-
-Summary:
- This function is called on receiving a Read By Group Response event or 
- Read response with 128-bit service uuid. 
-
-Parameters:
- *discServInfo: The pointer to a service information structure.
-
-Return:
- None
-
+* Function Name: CyBle_CustomcDiscoverServiceEventHandler
+***************************************************************************//**
+* 
+*  This function is called on receiving a Read By Group Response event or 
+*  Read response with 128-bit service uuid. 
+* 
+*  \param *discServInfo: The pointer to a service information structure.
+* 
+* \return
+*  None
+* 
 ******************************************************************************/
 void CyBle_CustomcDiscoverServiceEventHandler(const CYBLE_DISC_SRVC128_INFO_T *discServInfo)
 {
@@ -144,21 +143,19 @@ void CyBle_CustomcDiscoverServiceEventHandler(const CYBLE_DISC_SRVC128_INFO_T *d
 
 
 /******************************************************************************
-##Function Name: CyBle_CustomcDiscoverCharacteristicsEventHandler
-*******************************************************************************
-
-Summary:
- This function is called on receiving a CYBLE_EVT_GATTC_READ_BY_TYPE_RSP
- event. Based on the service index, an appropriate data structure is populated
- using the data received as part of the callback.
-
-Parameters:
- *discCharInfo: The pointer to a characteristic information structure.
- discoveryService: The index of the service instance.
-
-Return:
- None
-
+* Function Name: CyBle_CustomcDiscoverCharacteristicsEventHandler
+***************************************************************************//**
+* 
+*  This function is called on receiving a CYBLE_EVT_GATTC_READ_BY_TYPE_RSP
+*  event. Based on the service index, an appropriate data structure is populated
+*  using the data received as part of the callback.
+* 
+*  \param *discCharInfo: The pointer to a characteristic information structure.
+*  \param discoveryService: The index of the service instance.
+* 
+* \return
+*  None
+* 
 ******************************************************************************/
 void CyBle_CustomcDiscoverCharacteristicsEventHandler(uint16 discoveryService, const CYBLE_DISC_CHAR_INFO_T *discCharInfo)
 {
@@ -235,19 +232,17 @@ void CyBle_CustomcDiscoverCharacteristicsEventHandler(uint16 discoveryService, c
 
 
 /****************************************************************************** 
-##Function Name: CyBle_GetCustomCharRange
-*******************************************************************************
-
-Summary:
- Returns a possible range of the current characteristic descriptor
- which is pointed by custom service and char index.
-
-Parameters:
- incrementIndex: Not zero value indicates that service and characteristic index
-                 should be incremented.
-Return:
- CYBLE_GATT_ATTR_HANDLE_RANGE_T range: the block of start and end handles.
-
+* Function Name: CyBle_GetCustomCharRange
+***************************************************************************//**
+* 
+*  Returns a possible range of the current characteristic descriptor
+*  which is pointed by custom service and char index.
+* 
+*  \param incrementIndex: Not zero value indicates that service and characteristic index
+*                  should be incremented.
+* \return
+*  CYBLE_GATT_ATTR_HANDLE_RANGE_T range: the block of start and end handles.
+* 
 ******************************************************************************/
 CYBLE_GATT_ATTR_HANDLE_RANGE_T CyBle_CustomcGetCharRange(uint8 incrementIndex)
 {
@@ -289,8 +284,9 @@ CYBLE_GATT_ATTR_HANDLE_RANGE_T CyBle_CustomcGetCharRange(uint8 incrementIndex)
             charRange.endHandle = cyBle_customCServ[cyBle_customDisServIndex].
                                 customServChar[cyBle_customDisCharIndex].customServCharEndHandle;
         }
-    }while(((charRange.startHandle == (CYBLE_GATT_INVALID_ATTR_HANDLE_VALUE + 1u)) || 
-            (charRange.endHandle == CYBLE_GATT_INVALID_ATTR_HANDLE_VALUE) ||
+    }while(((charRange.startHandle <= cyBle_gattcDiscoveryRange.startHandle) || 
+            (charRange.startHandle > cyBle_gattcDiscoveryRange.endHandle) ||
+            (charRange.endHandle < cyBle_gattcDiscoveryRange.startHandle) ||
             (charRange.startHandle > charRange.endHandle)) && 
             (cyBle_customDisCharIndex < cyBle_customCServ[cyBle_customDisServIndex].charCount));
     
@@ -299,20 +295,18 @@ CYBLE_GATT_ATTR_HANDLE_RANGE_T CyBle_CustomcGetCharRange(uint8 incrementIndex)
 
 
 /******************************************************************************
-##Function Name: CyBle_CustomcDiscoverCharDescriptorsEventHandler
-*******************************************************************************
-
-Summary:
- This function is called on receiving a CYBLE_EVT_GATTC_FIND_INFO_RSP event.
- Based on the descriptor UUID, an appropriate data structure is populated using
- the data received as part of the callback.
-
-Parameters:
- *discDescrInfo: The pointer to a descriptor information structure.
-
-Return:
- None
-
+* Function Name: CyBle_CustomcDiscoverCharDescriptorsEventHandler
+***************************************************************************//**
+* 
+*  This function is called on receiving a CYBLE_EVT_GATTC_FIND_INFO_RSP event.
+*  Based on the descriptor UUID, an appropriate data structure is populated using
+*  the data received as part of the callback.
+* 
+*  \param *discDescrInfo: The pointer to a descriptor information structure.
+* 
+* \return
+*  None
+* 
 ******************************************************************************/
 void CyBle_CustomcDiscoverCharDescriptorsEventHandler(const CYBLE_DISC_DESCR_INFO_T *discDescrInfo)
 {
